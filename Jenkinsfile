@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11-slim'
-            args '-v /tmp:/tmp'  // Optional volume mount if needed
-        }
-    }
+    agent any
 
     environment {
         PYTHON_VERSION = '3.11.9'  // Specify the Python version you want to use
@@ -35,9 +30,17 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 script {
-                    // Install dependencies directly in container
+                    // Install Python using pyenv (no root required)
                     sh '''
-                        pip install virtualenv
+                        if ! command -v python3 &> /dev/null; then
+                            curl https://pyenv.run | bash
+                            export PYENV_ROOT="$HOME/.pyenv"
+                            export PATH="$PYENV_ROOT/bin:$PATH"
+                            eval "$(pyenv init -)"
+                            pyenv install $PYTHON_VERSION
+                            pyenv global $PYTHON_VERSION
+                        fi
+                        python -m pip install virtualenv
                         python -m venv .venv
                         . .venv/bin/activate
                         pip install -r requirements.txt || echo "No requirements.txt found"
