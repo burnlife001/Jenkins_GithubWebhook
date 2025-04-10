@@ -12,7 +12,6 @@ function Get-JenkinsContainer {
         return $null # 或者返回 null，让调用者处理
     }
     Write-Host "找到 Jenkins 容器: $containerName" -ForegroundColor Green
-    Pause-Script
     return $containerName
 }
 function Install-OpenSSH {

@@ -2,17 +2,15 @@ pipeline {
     agent any
 
     environment {
-        PYTHON_VERSION = '3.9'  // Specify the Python version you want to use
+        PYTHON_VERSION = '3.11.9'  // Specify the Python version you want to use
     }
 
     stages {
         stage('Cleanup') {
             steps {
                 cleanWs()
-                sh 'rm -rf .git'
             }
         }
-
         stage('Checkout') {
             steps {
                 script {
