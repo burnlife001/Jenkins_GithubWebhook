@@ -6,7 +6,7 @@ pipeline {
     // 2. Environment Variables
     environment {
         VENV_DIR = '.venv' // Define virtual environment directory name
-    }
+    } 
     // 3. Stages: The main work units of the pipeline
     stages {
         // Stage 0: Setup Python Environment
