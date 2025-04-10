@@ -3,7 +3,7 @@
 # Function: Commit and push all branches with date-based message
 
 # Get current date and format
-$currentDate = Get-Date -Format "yyyy-MM-dd"
+$currentDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $commitMessage = "Daily backup: $currentDate"
 
 # Output start info
@@ -36,8 +36,6 @@ try {
 
     # Record last push time
     $currentDateTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    "Last push time: $currentDateTime" | Out-File -FilePath "last_push.txt" -Encoding UTF8
-
     Write-Host "`nAuto git commit and push completed successfully!" -ForegroundColor Green
 }
 catch {
