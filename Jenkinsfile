@@ -7,26 +7,13 @@ pipeline {
     environment {
         VENV_DIR = '.venv' // Define virtual environment directory name
     }
-
-    // 3. Options for the pipeline
-    options {
-        // Clean workspace before each build to avoid Git corruption issues
-        cleanWs()
-    }
-
     // 3. Stages: The main work units of the pipeline
     stages {
         // Stage 0: Setup Python Environment
         // Add SSH verification stage
-        stage('Verify SSH') {
+        stage('Cleanup') {
             steps {
-                script {
-                    sh '''
-                        ssh -T -o StrictHostKeyChecking=no git@github.com || true
-                        ssh-add -l
-                        git ls-remote -h git@github.com:burnlife001/Jenkins_GithubWebhook.git HEAD
-                    '''
-                }
+                cleanWs()
             }
         }
         // Stage 1: Force a fresh checkout
