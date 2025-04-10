@@ -1,8 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11.9-slim'
+            args '-v /tmp:/tmp --user root'  // 使用root权限确保能安装依赖
+        }
+    }
 
     environment {
-        PYTHON_VERSION = '3.11.9'  // Specify the Python version you want to use
+        PYTHON_VERSION = '3.11.9'
     }
 
     stages {
@@ -30,16 +35,10 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 script {
-                    // Verify Python is available
+                    // 在Docker容器中直接使用预装的Python
                     sh '''
-                        if ! command -v python3 &> /dev/null; then
-                            echo "Python3 not found. Please ensure Python ${PYTHON_VERSION} is installed on the Jenkins agent."
-                            exit 1
-                        fi
-                        
-                        # Create and activate virtual environment
-                        python3 -m pip install --user virtualenv
-                        python3 -m venv .venv
+                        python -m pip install --upgrade pip
+                        python -m venv .venv
                         . .venv/bin/activate
                         pip install -r requirements.txt || echo "No requirements.txt found"
                     '''
