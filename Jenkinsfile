@@ -14,24 +14,43 @@ pipeline {
         stage('Cleanup') {
             steps {
                 cleanWs()
+                sh 'rm -rf .git || echo "No .git directory to remove"'
             }
         }
         // Stage 1: Force a fresh checkout
         stage('Checkout') {
             steps {
+                script {
+                    // 尝试修复损坏的 Git 对象（参考）
+                    sh 'git fsck --full || true'
+                    sh 'find .git/objects -type f -empty -delete || true'
+                }
                 checkout(scm: [
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
                     extensions: [
-                        [$class: 'CleanBeforeCheckout'],
-                        [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true],
-                        [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true]
+                        [$class: 'CleanBeforeCheckout'],  // 确保克隆前清理
+                        [$class: 'CloneOption', depth: 0, noTags: false, shallow: false]  // 深度为0表示完整克隆
                     ],
                     userRemoteConfigs: [[
                         credentialsId: 'github-ssh-key',
                         url: 'git@github.com:burnlife001/Jenkins_GithubWebhook.git'
                     ]]
                 ])
+
+                // checkout(scm: [
+                //     $class: 'GitSCM',
+                //     branches: [[name: '*/main']],
+                //     extensions: [
+                //         [$class: 'CleanBeforeCheckout'],
+                //         [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true],
+                //         [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true]
+                //     ],
+                //     userRemoteConfigs: [[
+                //         credentialsId: 'github-ssh-key',
+                //         url: 'git@github.com:burnlife001/Jenkins_GithubWebhook.git'
+                //     ]]
+                // ])
             }
         }
         
