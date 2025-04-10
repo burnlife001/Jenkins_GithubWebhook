@@ -34,7 +34,7 @@ pipeline {
             steps {
                 checkout(scm: [
                     $class: 'GitSCM',
-                    branches: [[name: '*/master']],
+                    branches: [[name: '*/main']],
                     extensions: [
                         [$class: 'CleanBeforeCheckout'],
                         [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true],
