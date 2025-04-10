@@ -4,7 +4,7 @@ org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed:
 WorkflowScript: 161: illegal string body character after dollar sign;
    solution: either escape a literal dollar sign "\$5" or bracket the value expression "${5}" @ line 161, column 25.
                            sh """
-                           ^
+                            ^
 
 1 error
 
