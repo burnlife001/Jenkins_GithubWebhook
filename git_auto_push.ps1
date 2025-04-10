@@ -18,7 +18,6 @@ try {
         throw "Failed to stage files"
     }
     Write-Host "Files staged successfully" -ForegroundColor Green
-
     # Create commit
     Write-Host "`nCreating commit..."
     git commit -m $commitMessage
