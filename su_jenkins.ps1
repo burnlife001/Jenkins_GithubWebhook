@@ -51,7 +51,19 @@ catch {
     Write-Error "更新 sudoers 文件时发生错误：$($_.Exception.Message)"
     exit 1
 }
-
+function Get-JenkinsContainer {
+    $containerName = docker ps --format "{{.Names}}\t{{.Image}}" | Where-Object {
+        $_ -match '\tjenkins/jenkins([:@]|$)'
+    } | Select-Object -First 1 | ForEach-Object {
+        ($_ -split '\t')[0]
+    }
+    if (-not $containerName) {
+        Write-Host "错误：未找到基于 'jenkins/jenkins' 镜像的运行中的容器。" -ForegroundColor Red
+        return $null # 或者返回 null，让调用者处理
+    }
+    Write-Host "找到 Jenkins 容器: $containerName" -ForegroundColor Green
+    return $containerName
+}
 # 获取 Jenkins 容器名称
 $JENKINS_CONTAINER = Get-JenkinsContainer
 
