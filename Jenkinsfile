@@ -30,18 +30,16 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 script {
-                    // Install Python using pyenv (no root required)
+                    // Verify Python is available
                     sh '''
                         if ! command -v python3 &> /dev/null; then
-                            curl https://pyenv.run | bash
-                            export PYENV_ROOT="$HOME/.pyenv"
-                            export PATH="$PYENV_ROOT/bin:$PATH"
-                            eval "$(pyenv init -)"
-                            pyenv install $PYTHON_VERSION
-                            pyenv global $PYTHON_VERSION
+                            echo "Python3 not found. Please ensure Python ${PYTHON_VERSION} is installed on the Jenkins agent."
+                            exit 1
                         fi
-                        python -m pip install virtualenv
-                        python -m venv .venv
+                        
+                        # Create and activate virtual environment
+                        python3 -m pip install --user virtualenv
+                        python3 -m venv .venv
                         . .venv/bin/activate
                         pip install -r requirements.txt || echo "No requirements.txt found"
                     '''
