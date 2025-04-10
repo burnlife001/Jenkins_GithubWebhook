@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11-slim'
+            args '-v /tmp:/tmp'  // Optional volume mount if needed
+        }
+    }
 
     environment {
         PYTHON_VERSION = '3.11.9'  // Specify the Python version you want to use
@@ -30,16 +35,10 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 script {
-                    // Install Python if not available
+                    // Install dependencies directly in container
                     sh '''
-                        if ! command -v python3 &> /dev/null; then
-                            apt-get update && apt-get install -y python3 python3-pip
-                        fi
-                    '''
-                    // Create and activate virtual environment
-                    sh '''
-                        python3 -m pip install --user virtualenv
-                        python3 -m venv .venv
+                        pip install virtualenv
+                        python -m venv .venv
                         . .venv/bin/activate
                         pip install -r requirements.txt || echo "No requirements.txt found"
                     '''
