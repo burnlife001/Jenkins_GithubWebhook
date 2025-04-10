@@ -179,7 +179,7 @@ function Pause-Script {
 
 function Connect-DockerDesktopSSH {
     Write-Host "`n正在连接到 Docker Desktop SSH..."
-    docker exec -it -u root $JENKINS_CONTAINER /bin/bash
+    docker exec -it -u jenkins $JENKINS_CONTAINER /bin/bash
     if ($LASTEXITCODE -ne 0) {
         Write-Host "SSH 连接失败" -ForegroundColor Red
     }
