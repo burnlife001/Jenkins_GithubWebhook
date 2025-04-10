@@ -31,4 +31,4 @@ WorkflowScript: 161: illegal string body character after dollar sign;
   at PluginClassLoader for workflow-job//org.jenkinsci.plugins.workflow.job.WorkflowRun.run(WorkflowRun.java:343)
   at hudson.model.ResourceController.execute(ResourceController.java:101)
   at hudson.model.Executor.run(Executor.java:446)
-Finished: FAILURE
+Finished: FAILURE 
