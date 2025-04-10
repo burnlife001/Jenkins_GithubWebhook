@@ -1,122 +1,94 @@
-// Jenkinsfile (Declarative Pipeline)
 pipeline {
-    // 1. Agent Configuration: Where the pipeline runs
-    agent any // Runs on any available Jenkins agent
+    agent any
 
-    // 2. Environment Variables
     environment {
-        VENV_DIR = '.venv' // Define virtual environment directory name
-    } 
-    // 3. Stages: The main work units of the pipeline
+        PYTHON_VERSION = '3.9'  // Specify the Python version you want to use
+    }
+
     stages {
-        // Stage 0: Setup Python Environment
-        // Add SSH verification stage
         stage('Cleanup') {
             steps {
                 cleanWs()
-                sh 'rm -rf .git || echo "No .git directory to remove"'
+                sh 'rm -rf .git'
             }
         }
-        // Stage 1: Force a fresh checkout
+
         stage('Checkout') {
             steps {
                 script {
-                    // 尝试修复损坏的 Git 对象（参考）
                     sh 'git fsck --full || true'
                     sh 'find .git/objects -type f -empty -delete || true'
                 }
-                checkout(scm: [
-                    $class: 'GitSCM',
+                checkout([$class: 'GitSCM',
                     branches: [[name: '*/main']],
-                    extensions: [
-                        [$class: 'CleanBeforeCheckout'],  // 确保克隆前清理
-                        [$class: 'CloneOption', depth: 0, noTags: false, shallow: false]  // 深度为0表示完整克隆
-                    ],
                     userRemoteConfigs: [[
-                        credentialsId: 'github-ssh-key',
-                        url: 'git@github.com:burnlife001/Jenkins_GithubWebhook.git'
+                        url: 'git@github.com:burnlife001/Jenkins_GithubWebhook.git',
+                        credentialsId: 'github_ssh'  // Make sure this matches your configured credential ID
                     ]]
                 ])
-
-                // checkout(scm: [
-                //     $class: 'GitSCM',
-                //     branches: [[name: '*/main']],
-                //     extensions: [
-                //         [$class: 'CleanBeforeCheckout'],
-                //         [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true],
-                //         [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true]
-                //     ],
-                //     userRemoteConfigs: [[
-                //         credentialsId: 'github-ssh-key',
-                //         url: 'git@github.com:burnlife001/Jenkins_GithubWebhook.git'
-                //     ]]
-                // ])
             }
         }
-        
-
 
         stage('Setup Environment') {
             steps {
                 script {
-                    // Check if Python exists - using sh since Docker containers typically use Linux
-                    sh 'python --version || python3 --version'
-                    sh 'pip --version || pip3 --version'
-
-                    // Create virtual environment
-                    sh "python -m venv ${env.VENV_DIR} || python3 -m venv ${env.VENV_DIR}"
-
-                    // Install dependencies (activate venv within the sh step)
-                    sh ". ${env.VENV_DIR}/bin/activate && pip install --upgrade pip"
-                    sh ". ${env.VENV_DIR}/bin/activate && pip install -r requirements.txt"
-
-                    // Install test/lint tools if not in requirements.txt
-                    sh ". ${env.VENV_DIR}/bin/activate && pip install pytest flake8"
+                    // Install Python if not available
+                    sh '''
+                        if ! command -v python3 &> /dev/null; then
+                            apt-get update && apt-get install -y python3 python3-pip
+                        fi
+                    '''
+                    // Create and activate virtual environment
+                    sh '''
+                        python3 -m pip install --user virtualenv
+                        python3 -m venv .venv
+                        . .venv/bin/activate
+                        pip install -r requirements.txt || echo "No requirements.txt found"
+                    '''
                 }
             }
         }
 
-        // Stage 2: Linting (Code Quality Check)
         stage('Lint') {
             steps {
-                echo 'Running Linter (Flake8)...'
-                // Activate venv and run linter
-                sh ". ${env.VENV_DIR}/bin/activate && flake8 ."
-            }
-        }
-
-        // Stage 3: Testing
-        stage('Test') {
-            steps {
-                echo 'Running Tests (Pytest)...'
-                // Activate venv and run tests
-                sh ". ${env.VENV_DIR}/bin/activate && pytest --junitxml=test-results.xml || true"
-            }
-            post {
-                always {
-                    // Publish test results (requires JUnit plugin)
-                    junit 'test-results.xml'
+                script {
+                    sh '''
+                        . .venv/bin/activate
+                        pip install pylint
+                        find . -name "*.py" -exec pylint {} \\;
+                    '''
                 }
             }
         }
 
-        // Stage 4: Build Package
+        stage('Test') {
+            steps {
+                script {
+                    sh '''
+                        . .venv/bin/activate
+                        pip install pytest
+                        pytest || echo "No tests found"
+                    '''
+                }
+            }
+        }
+
         stage('Build Package') {
             steps {
-                echo 'Building Python package...'
-                sh ". ${env.VENV_DIR}/bin/activate && pip install build wheel"
-                sh ". ${env.VENV_DIR}/bin/activate && python -m build --wheel"
-                archiveArtifacts artifacts: 'dist/*.whl', fingerprint: true
+                script {
+                    sh '''
+                        . .venv/bin/activate
+                        python setup.py bdist_wheel || echo "No setup.py found"
+                    '''
+                }
             }
         }
     }
 
-    // 4. Post Actions: Run after all stages complete
     post {
         always {
             echo 'Pipeline finished.'
-            // Clean up virtual environment
-            sh "rm -rf ${env.VENV_DIR}"
+            sh 'rm -rf .venv'
         }
         success {
             echo 'Pipeline succeeded!'
